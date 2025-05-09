@@ -1,4 +1,6 @@
-gradio
+streamlit
 tensorflow
 numpy
 Pillow
+matplotlib
+h5py
