@@ -1,12 +1,23 @@
 import streamlit as st
 import numpy as np
+import os
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.image import resize
 from PIL import Image
 
+# Debug: Check current directory and files
+st.write("Current working directory:", os.getcwd())
+st.write("Files in current directory:", os.listdir())
+
 # Load model
 model = load_model('fruit_classifier_model.h5')
+import streamlit as st
+import numpy as np
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.image import img_to_array
+from tensorflow.image import resize
+from PIL import Image
 
 # Define class labels
 class_labels = ['Apple', 'Banana', 'Orange']  # Replace with your actual labels
