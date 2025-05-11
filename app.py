@@ -11,7 +11,7 @@ from tensorflow.keras.models import load_model
 with open('config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
 
-# Setup authentication
+# Setup authenticator (compatible with streamlit-authenticator >= 0.3.0)
 authenticator = stauth.Authenticate(
     config['credentials'],
     config['cookie']['name'],
@@ -19,15 +19,14 @@ authenticator = stauth.Authenticate(
     config['cookie']['expiry_days']
 )
 
-
-# Login UI
-auth_status = authenticator.login('Login', location='sidebar')
+# Login UI (new API returns 3 values)
+name, auth_status, username = authenticator.login(location='sidebar')
 
 if auth_status:
-    authenticator.logout('Logout', location='sidebar')
-    st.sidebar.success(f"Logged in as {st.session_state['name']}")
+    authenticator.logout("Logout", location="sidebar")
+    st.sidebar.success(f"Logged in as {name}")
 
-    # App title
+    # Set up the Streamlit app
     st.set_page_config(page_title="Freshness Finder", layout="centered")
     st.title("🍓 Freshness Finder")
     st.write("Upload a fruit image to check if it's **fresh or rotten**!")
@@ -52,7 +51,7 @@ if auth_status:
     with open(label_file, "r") as f:
         class_labels = [line.strip() for line in f.readlines()]
 
-    # Functions
+    # Helper functions
     def preprocess_image(image):
         image = image.resize((100, 100))
         image = image.convert("RGB")
@@ -83,7 +82,7 @@ if auth_status:
         top_indices = np.argsort(probs)[::-1][:k]
         return [(class_labels[i] if i < len(class_labels) else f"Class {i}", probs[i]) for i in top_indices]
 
-    # UI
+    # Image upload UI
     save_image = st.checkbox("💾 Save uploaded image")
     uploaded_file = st.file_uploader("📤 Upload an image", type=["jpg", "jpeg", "png"])
 
@@ -121,14 +120,3 @@ elif auth_status is False:
     st.error("❌ Invalid username or password")
 elif auth_status is None:
     st.warning("🔑 Please enter your username and password")
-
-
-
-
-
-
-
-
-
-
-       
