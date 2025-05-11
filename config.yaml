@@ -1,13 +1,15 @@
 credentials:
   usernames:
-    user1:
-      name: Alice
-      password: '$2b$12$eP0JzqElzKbcfL5lxL27/.E7mAq6YQJ3YvNNgM3OVLfW03YkU7OOS'  # pass123
-    user2:
-      name: Bob
-      password: '$2b$12$NcOef9iFYw4gFbZZuD04aeEOaECAnYAfU88U62yP.Su5FF/cjxuh6'  # mypassword
+    jdoe:
+      email: jdoe@example.com
+      name: John Doe
+      password: '$2b$12$KIXoa2BPa.CckBvR1fsYLOe1eU3a6PC6o/I7jqStw5UMYOyn3xM2m'  # hashed password
 
 cookie:
   name: freshness_cookie
-  key: some_random_key
+  key: some_secret_key
   expiry_days: 7
+
+preauthorized:
+  emails:
+    - jdoe@example.com
