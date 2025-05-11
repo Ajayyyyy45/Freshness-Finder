@@ -1,6 +1,7 @@
 streamlit
 streamlit-authenticator
-PyYAML
+numpy
 Pillow
 tensorflow
-numpy
+pyyaml
+
