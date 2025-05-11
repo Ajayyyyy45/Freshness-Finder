@@ -12,13 +12,27 @@ except Exception as e:
     st.error(f"🚫 Failed to load model: {e}")
     st.stop()
 
-# Load class labels from file
-try:
-    with open("class_labels.txt", "r") as f:
-        class_labels = [line.strip() for line in f.readlines()]
-except FileNotFoundError:
-    st.error("🚫 'class_labels.txt' not found. Please make sure it's in the same folder as this app.")
-    st.stop()
+# Auto-generate class_labels.txt if missing
+def generate_dummy_labels(filename, num_classes):
+    with open(filename, "w") as f:
+        for i in range(num_classes):
+            f.write(f"class_{i}\n")
+    st.warning(f"⚠️ 'class_labels.txt' not found. A placeholder with {num_classes} classes was generated.")
+
+# Load or generate class labels
+label_file = "class_labels.txt"
+if not os.path.exists(label_file):
+    # Try to detect number of classes from model output shape
+    try:
+        num_classes = model.output_shape[-1]
+        generate_dummy_labels(label_file, num_classes)
+    except Exception as e:
+        st.error(f"🚫 Couldn't determine number of classes: {e}")
+        st.stop()
+
+# Read class labels
+with open(label_file, "r") as f:
+    class_labels = [line.strip() for line in f.readlines()]
 
 # Image preprocessing
 def preprocess_image(image):
