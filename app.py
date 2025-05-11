@@ -4,90 +4,65 @@ from PIL import Image
 import os
 from tensorflow.keras.models import load_model
 
-# Load model
-try:
-    model = load_model("fruit_classifier_model.h5")
-except Exception as e:
-    st.error(f"❌ Could not load model: {e}")
-    st.stop()
+# Load trained model
+model = load_model("fruit_classifier_model.h5")
 
-# Load class labels
-label_file = "class_labels.txt"
-if not os.path.exists(label_file):
-    st.error("🚫 'class_labels.txt' not found. Please place it in the same folder as this app.")
-    st.stop()
+# Automatically generate class labels based on model output shape
+output_shape = model.output_shape[-1]
+class_labels = [f"Class {i}" for i in range(output_shape)]
 
-with open(label_file, "r") as f:
-    class_labels = [line.strip() for line in f.readlines()]
-
-# Preprocess image
+# Image preprocessing
 def preprocess_image(image):
-    image = image.resize((100, 100))
-    image = image.convert("RGB")
-    image = np.array(image) / 255.0
-    image = np.expand_dims(image, axis=0)
+    image = image.resize((100, 100))            # Resize to match training input
+    image = image.convert("RGB")                # Ensure 3 channels
+    image = np.array(image) / 255.0             # Normalize pixel values to [0, 1]
+    image = np.expand_dims(image, axis=0)       # Add batch dimension (1, 100, 100, 3)
     return image
 
-# Predict image class and probabilities
+# Prediction function
 def predict_image_with_probs(image):
-    processed = preprocess_image(image)
-    probs = model.predict(processed)[0]
+    processed_image = preprocess_image(image)
+    probs = model.predict(processed_image)[0]
     predicted_index = np.argmax(probs)
 
     if predicted_index >= len(class_labels):
-        raise ValueError(f"Predicted index {predicted_index} out of range of class labels.")
+        raise ValueError(f"Predicted index {predicted_index} out of range.")
 
-    return class_labels[predicted_index], probs[predicted_index], probs
+    predicted_label = class_labels[predicted_index]
+    confidence = probs[predicted_index]
 
-# Determine freshness
-def get_freshness_status(label):
-    label_lower = label.lower()
-    if "rotten" in label_lower:
-        return "Rotten ❌", "Not safe to eat"
-    elif "fresh" in label_lower:
-        return "Fresh ✅", "Good to eat for 2-3 days"
-    else:
-        return "Unknown", "Unknown shelf life"
+    return predicted_label, confidence
 
-# Get top K predictions
-def get_top_k_predictions(probs, k=3):
-    top_indices = np.argsort(probs)[::-1][:k]
-    return [(class_labels[i], probs[i]) for i in top_indices]
-
-# Streamlit UI
+# Streamlit App UI
 st.set_page_config(page_title="Freshness Finder", layout="centered")
 st.title("🍓 Freshness Finder")
-st.write("Upload a fruit image to check if it's **fresh or rotten**!")
+st.write("Upload a fruit image and find out if it's fresh or rotten.")
 
-save_image = st.checkbox("💾 Save uploaded image")
+# Option to save uploaded images
+save_image = st.checkbox("💾 Save uploaded/captured image")
+
+# File upload
 uploaded_file = st.file_uploader("📤 Upload an image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
     st.image(image, caption="🖼️ Uploaded Image", use_column_width=True)
 
+    # Save image if selected
     if save_image:
         os.makedirs("saved_uploads", exist_ok=True)
-        image_path = os.path.join("saved_uploads", uploaded_file.name)
-        image.save(image_path)
-        st.info(f"✅ Image saved to `{image_path}`")
+        image.save(f"saved_uploads/{uploaded_file.name}")
+        st.info(f"✅ Image saved as `saved_uploads/{uploaded_file.name}`")
 
     if st.button("🔍 Classify"):
-        with st.spinner("Analyzing..."):
-            try:
-                label, confidence, probs = predict_image_with_probs(image)
-                freshness, recommendation = get_freshness_status(label)
+        try:
+            label, confidence = predict_image_with_probs(image)
 
-                st.success(f"**🧠 Prediction:** {label}")
-                st.info(f"**🍽️ Freshness Status:** {freshness}")
-                st.write(f"**📊 Confidence:** {confidence:.2%}")
-                st.write(f"**🕒 Recommendation:** {recommendation}")
+            st.success(f"**🧠 Prediction:** {label}")
+            st.write(f"**📊 Confidence:** {confidence:.2%}")
 
-                st.subheader("🔝 Top 3 Predictions:")
-                for lbl, prob in get_top_k_predictions(probs):
-                    st.write(f"- {lbl}: {prob:.2%}")
-            except Exception as e:
-                st.error(f"⚠️ Error: {e}")
+        except Exception as e:
+            st.error(f"⚠️ Error: {e}")
 
 
 
