@@ -8,26 +8,27 @@ import matplotlib.pyplot as plt
 # Load your trained model
 model = load_model("fruit_classifier_model.h5")
 
-# Class labels (from your notebook)
+# Get model input shape (excluding batch size)
+_, height, width, channels = model.input_shape
+
+# Class labels
 class_labels = ['freshapples', 'freshbanana', 'freshoranges',
                 'rottenapples', 'rottenbanana', 'rottenoranges']
 
 # Image preprocessing
 def preprocess_image(image):
-    image = image.resize((80, 160))  # 80 * 160 = 12800
-    image = np.array(image) / 255.0  # Normalize
+    image = image.resize((width, height))  # Resize to model input
+    image = np.array(image) / 255.0  # Normalize to [0, 1]
 
     if image.shape[-1] == 4:
-        image = image[..., :3]  # Convert RGBA to RGB
+        image = image[..., :3]  # Remove alpha channel if RGBA
 
-    image = image.flatten()
+    image = np.expand_dims(image, axis=0)  # Shape: (1, height, width, 3)
     return image
 
 # Prediction function
 def predict_image_with_probs(image):
     processed_image = preprocess_image(image)
-    processed_image = np.expand_dims(processed_image, axis=0)  # Shape: (1, 12800)
-
     probs = model.predict(processed_image)[0]
     predicted_index = np.argmax(probs)
 
