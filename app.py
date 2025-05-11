@@ -20,7 +20,7 @@ if not os.path.exists(label_file):
 with open(label_file, "r") as f:
     class_labels = [line.strip() for line in f.readlines()]
 
-# Preprocess the image
+# Preprocess image
 def preprocess_image(image):
     image = image.resize((100, 100))
     image = image.convert("RGB")
@@ -78,7 +78,17 @@ if uploaded_file is not None:
                 label, confidence, probs = predict_image_with_probs(image)
                 freshness, recommendation = get_freshness_status(label)
 
-                st.success
+                st.success(f"**🧠 Prediction:** {label}")
+                st.info(f"**🍽️ Freshness Status:** {freshness}")
+                st.write(f"**📊 Confidence:** {confidence:.2%}")
+                st.write(f"**🕒 Recommendation:** {recommendation}")
+
+                st.subheader("🔝 Top 3 Predictions:")
+                for lbl, prob in get_top_k_predictions(probs):
+                    st.write(f"- {lbl}: {prob:.2%}")
+            except Exception as e:
+                st.error(f"⚠️ Error: {e}")
+
 
 
 
