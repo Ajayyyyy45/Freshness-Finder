@@ -1,6 +1,6 @@
 streamlit
+streamlit-authenticator
+PyYAML
+Pillow
 tensorflow
 numpy
-Pillow
-matplotlib
-h5py
