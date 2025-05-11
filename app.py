@@ -14,20 +14,15 @@ class_labels = [f"Class {i}" for i in range(output_shape)]
 
 # Image preprocessing
 def preprocess_image(image):
-    image = image.resize((80, 160))  # Resize to match training input
-    image = np.array(image) / 255.0  # Normalize pixel values
-
-    if image.shape[-1] == 4:
-        image = image[..., :3]  # Convert RGBA to RGB if needed
-
-    image = image.flatten()  # Flatten image to match model input
+    image = image.resize((100, 100))            # Resize to match training input
+    image = image.convert("RGB")                # Ensure 3 channels
+    image = np.array(image) / 255.0             # Normalize pixel values to [0, 1]
+    image = np.expand_dims(image, axis=0)       # Add batch dimension (1, 100, 100, 3)
     return image
 
 # Prediction function
 def predict_image_with_probs(image):
     processed_image = preprocess_image(image)
-    processed_image = np.expand_dims(processed_image, axis=0)  # Shape: (1, 12800)
-
     probs = model.predict(processed_image)[0]
     predicted_index = np.argmax(probs)
 
@@ -77,4 +72,3 @@ if uploaded_file is not None:
 
         except Exception as e:
             st.error(f"⚠️ Error: {e}")
-
