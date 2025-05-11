@@ -7,23 +7,21 @@ from tensorflow.keras.models import load_model
 # Load trained model
 model = load_model("fruit_classifier_model.h5")
 
-# Manually map class index to real-world label
-class_labels = {
-    0: "Fresh Apple",
-    1: "Rotten Apple",
-    2: "Fresh Banana",
-    3: "Rotten Banana",
-    4: "Fresh Orange",
-    5: "Rotten Orange"
-    # Add more classes as needed based on your training
-}
+# Dynamically generate class labels (e.g., "Class 0", "Class 1", ...)
+output_shape = model.output_shape[-1]
+class_labels = [f"Class {i}" for i in range(output_shape)]
+
+# Manually define which class indices are fresh and which are rotten
+# ⚠️ Update these lists based on your dataset's class structure
+fresh_indices = list(range(0, 63))     # Example: Classes 0–62 = Fresh
+rotten_indices = list(range(63, 125))  # Example: Classes 63–124 = Rotten
 
 # Image preprocessing
 def preprocess_image(image):
     image = image.resize((100, 100))            # Resize to match training input
     image = image.convert("RGB")                # Ensure 3 channels
     image = np.array(image) / 255.0             # Normalize pixel values
-    image = np.expand_dims(image, axis=0)       # Add batch dimension (1, 100, 100, 3)
+    image = np.expand_dims(image, axis=0)       # Add batch dimension
     return image
 
 # Prediction function
@@ -32,55 +30,57 @@ def predict_image_with_probs(image):
     probs = model.predict(processed_image)[0]
     predicted_index = np.argmax(probs)
 
-    if predicted_index not in class_labels:
-        raise ValueError(f"Class index {predicted_index} not found in class_labels mapping.")
+    if predicted_index >= len(class_labels):
+        raise ValueError(f"Predicted index {predicted_index} out of range.")
 
     predicted_label = class_labels[predicted_index]
     confidence = probs[predicted_index]
 
-    return predicted_label, confidence
+    return predicted_index, predicted_label, confidence
 
-# Freshness status checker
-def get_freshness_status(label):
-    if "Rotten" in label:
-        return "Rotten ❌"
-    elif "Fresh" in label:
-        return "Fresh ✅"
+# Determine freshness
+def get_freshness_status(index):
+    if index in rotten_indices:
+        return "Rotten ❌", "Not safe to eat"
+    elif index in fresh_indices:
+        return "Fresh ✅", "Good to eat for 2-3 days"
     else:
-        return "Unknown"
+        return "Unknown", "Unknown shelf life"
 
 # Streamlit UI
 st.set_page_config(page_title="Freshness Finder", layout="centered")
 st.title("🍓 Freshness Finder")
-st.write("Upload a fruit image and find out if it's **fresh or rotten**.")
+st.write("Upload a fruit image to see if it's **fresh or rotten**.")
 
 # Option to save uploaded images
-save_image = st.checkbox("💾 Save uploaded/captured image")
+save_image = st.checkbox("💾 Save uploaded image")
 
-# File upload
+# File uploader
 uploaded_file = st.file_uploader("📤 Upload an image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
     st.image(image, caption="🖼️ Uploaded Image", use_column_width=True)
 
-    # Save image if selected
+    # Save uploaded image
     if save_image:
         os.makedirs("saved_uploads", exist_ok=True)
         image.save(f"saved_uploads/{uploaded_file.name}")
-        st.info(f"✅ Image saved as `saved_uploads/{uploaded_file.name}`")
+        st.info(f"✅ Image saved to `saved_uploads/{uploaded_file.name}`")
 
     if st.button("🔍 Classify"):
         try:
-            label, confidence = predict_image_with_probs(image)
-            status = get_freshness_status(label)
+            index, label, confidence = predict_image_with_probs(image)
+            freshness, recommendation = get_freshness_status(index)
 
             st.success(f"**🧠 Prediction:** {label}")
-            st.info(f"**🍽️ Freshness Status:** {status}")
+            st.info(f"**🍽️ Freshness Status:** {freshness}")
             st.write(f"**📊 Confidence:** {confidence:.2%}")
+            st.write(f"**🕒 Recommendation:** {recommendation}")
 
         except Exception as e:
             st.error(f"⚠️ Error: {e}")
+
 
 
 
