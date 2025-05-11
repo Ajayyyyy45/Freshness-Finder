@@ -12,12 +12,13 @@ except Exception as e:
     st.error(f"🚫 Failed to load model: {e}")
     st.stop()
 
-# Embedded class labels (replace these with your actual labels)
-class_labels = [
-    "fresh_apple", "rotten_apple",
-    "fresh_banana", "rotten_banana",
-    "fresh_orange", "rotten_orange"
-]
+# Load class labels from file
+try:
+    with open("class_labels.txt", "r") as f:
+        class_labels = [line.strip() for line in f.readlines()]
+except FileNotFoundError:
+    st.error("🚫 'class_labels.txt' not found. Please make sure it's in the same folder as this app.")
+    st.stop()
 
 # Image preprocessing
 def preprocess_image(image):
@@ -34,7 +35,7 @@ def predict_image_with_probs(image):
     predicted_index = np.argmax(probs)
 
     if predicted_index >= len(class_labels):
-        raise ValueError(f"Predicted index {predicted_index} out of range.")
+        raise ValueError(f"Predicted index {predicted_index} out of range. Check your class_labels.txt file.")
 
     predicted_label = class_labels[predicted_index]
     confidence = probs[predicted_index]
