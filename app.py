@@ -7,15 +7,22 @@ from tensorflow.keras.models import load_model
 # Load trained model
 model = load_model("fruit_classifier_model.h5")
 
-# Automatically generate class labels based on model output shape
-output_shape = model.output_shape[-1]
-class_labels = [f"Class {i}" for i in range(output_shape)]
+# Manually map class index to real-world label
+class_labels = {
+    0: "Fresh Apple",
+    1: "Rotten Apple",
+    2: "Fresh Banana",
+    3: "Rotten Banana",
+    4: "Fresh Orange",
+    5: "Rotten Orange"
+    # Add more classes as needed based on your training
+}
 
 # Image preprocessing
 def preprocess_image(image):
     image = image.resize((100, 100))            # Resize to match training input
     image = image.convert("RGB")                # Ensure 3 channels
-    image = np.array(image) / 255.0             # Normalize pixel values to [0, 1]
+    image = np.array(image) / 255.0             # Normalize pixel values
     image = np.expand_dims(image, axis=0)       # Add batch dimension (1, 100, 100, 3)
     return image
 
@@ -25,18 +32,27 @@ def predict_image_with_probs(image):
     probs = model.predict(processed_image)[0]
     predicted_index = np.argmax(probs)
 
-    if predicted_index >= len(class_labels):
-        raise ValueError(f"Predicted index {predicted_index} out of range.")
+    if predicted_index not in class_labels:
+        raise ValueError(f"Class index {predicted_index} not found in class_labels mapping.")
 
     predicted_label = class_labels[predicted_index]
     confidence = probs[predicted_index]
 
     return predicted_label, confidence
 
-# Streamlit App UI
+# Freshness status checker
+def get_freshness_status(label):
+    if "Rotten" in label:
+        return "Rotten ❌"
+    elif "Fresh" in label:
+        return "Fresh ✅"
+    else:
+        return "Unknown"
+
+# Streamlit UI
 st.set_page_config(page_title="Freshness Finder", layout="centered")
 st.title("🍓 Freshness Finder")
-st.write("Upload a fruit image and find out if it's fresh or rotten.")
+st.write("Upload a fruit image and find out if it's **fresh or rotten**.")
 
 # Option to save uploaded images
 save_image = st.checkbox("💾 Save uploaded/captured image")
@@ -57,12 +73,15 @@ if uploaded_file is not None:
     if st.button("🔍 Classify"):
         try:
             label, confidence = predict_image_with_probs(image)
+            status = get_freshness_status(label)
 
             st.success(f"**🧠 Prediction:** {label}")
+            st.info(f"**🍽️ Freshness Status:** {status}")
             st.write(f"**📊 Confidence:** {confidence:.2%}")
 
         except Exception as e:
             st.error(f"⚠️ Error: {e}")
+
 
 
 
