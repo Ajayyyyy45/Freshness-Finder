@@ -1,4 +1,4 @@
-credentials:
+ccredentials:
   usernames:
     jdoe:
       email: jdoe@example.com
@@ -9,5 +9,6 @@ cookie:
   name: freshness_cookie
   key: some_secret_key
   expiry_days: 7
+
 
 
