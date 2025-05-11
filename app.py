@@ -9,7 +9,7 @@ model = load_model("fruit_classifier_model.h5")
 
 # Automatically generate class labels based on model output shape
 output_shape = model.output_shape[-1]
-class_labels = [f"Class {i}" for i in range(output_shape)]
+class_labels = [f"Class {i}" for i in range(output_shape)]  # Replace with actual labels if available
 
 # Image preprocessing
 def preprocess_image(image):
@@ -31,14 +31,20 @@ def predict_image_with_probs(image):
     predicted_label = class_labels[predicted_index]
     confidence = probs[predicted_index]
 
-    return predicted_label, confidence
+    return predicted_label, confidence, probs
 
 # Streamlit App UI
 st.set_page_config(page_title="Freshness Finder", layout="centered")
 st.title("🍓 Freshness Finder")
-st.write("Upload a fruit image and find out if it's fresh or rotten.")
 
-# Option to save uploaded images
+# 👋 Welcome message
+st.markdown("""
+### 👋 Welcome to Freshness Finder!
+Upload a fruit image and let our AI determine if it's **fresh or rotten**.  
+Perfect for shoppers, quality checkers, and curious minds!
+""")
+
+# Optional image save toggle
 save_image = st.checkbox("💾 Save uploaded/captured image")
 
 # File upload
@@ -56,10 +62,18 @@ if uploaded_file is not None:
 
     if st.button("🔍 Classify"):
         try:
-            label, confidence = predict_image_with_probs(image)
+            label, confidence, probs = predict_image_with_probs(image)
 
             st.success(f"**🧠 Prediction:** {label}")
-            st.write(f"**📊 Confidence:** {confidence:.2%}")
+            st.metric("📊 Confidence", f"{confidence:.2%}")
+
+            # Optional: Show all class probabilities
+            st.subheader("🔢 All Class Probabilities")
+            for i, prob in enumerate(probs):
+                st.write(f"{class_labels[i]}: {prob:.2%}")
 
         except Exception as e:
             st.error(f"⚠️ Error: {e}")
+
+
+
