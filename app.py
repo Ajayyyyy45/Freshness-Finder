@@ -62,7 +62,7 @@ if uploaded_file is not None:
             st.write(f"**📊 Confidence:** {confidence:.2%}")
 
         except Exception as e:
-            st.error(f"⚠️ Error: {e}")```
+            st.error(f"⚠️ Error: {e}")
 
 
 
