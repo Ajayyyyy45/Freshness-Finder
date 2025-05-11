@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 import os
-from tensorflow\.keras.models import load\_model
+from tensorflow.keras.models import load\_model
 
 # Load trained model
 
