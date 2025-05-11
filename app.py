@@ -2,61 +2,59 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 import os
-import json
-from tensorflow.keras.models import load_model
 import matplotlib.pyplot as plt
+from tensorflow.keras.models import load_model
 
-# Load model
+# Load trained model
 model = load_model("fruit_classifier_model.h5")
 
-# Load class labels
-with open("class_labels.json", "r") as f:
-    class_labels = json.load(f)
+# Automatically generate class labels based on model output shape
+output_shape = model.output_shape[-1]
+class_labels = [f"Class {i}" for i in range(output_shape)]
 
-# CNN-compatible image preprocessing
+# Image preprocessing
 def preprocess_image(image):
-    image = image.resize((100, 100))  # CNN expects 100x100 input
-    image = np.array(image) / 255.0
+    image = image.resize((80, 160))  # Resize to match training input
+    image = np.array(image) / 255.0  # Normalize pixel values
 
-    # Handle RGBA to RGB
     if image.shape[-1] == 4:
-        image = image[..., :3]
+        image = image[..., :3]  # Convert RGBA to RGB if needed
 
-    if image.shape != (100, 100, 3):
-        raise ValueError(f"Expected image shape (100, 100, 3), got {image.shape}")
-
-    image = np.expand_dims(image, axis=0)  # Shape: (1, 100, 100, 3)
+    image = image.flatten()  # Flatten image to match model input
     return image
 
 # Prediction function
 def predict_image_with_probs(image):
     processed_image = preprocess_image(image)
+    processed_image = np.expand_dims(processed_image, axis=0)  # Shape: (1, 12800)
+
     probs = model.predict(processed_image)[0]
-    predicted_index = int(np.argmax(probs))
+    predicted_index = np.argmax(probs)
 
     if predicted_index >= len(class_labels):
-        raise ValueError(f"Predicted index {predicted_index} out of range. "
-                         f"Model returned {len(probs)} outputs, "
-                         f"but only {len(class_labels)} labels found.")
+        raise ValueError(f"Predicted index {predicted_index} out of range.")
 
     predicted_label = class_labels[predicted_index]
     confidence = probs[predicted_index]
 
     return predicted_label, confidence, probs
 
-# Streamlit UI
-st.set_page_config(page_title="🍎 Freshness Finder", layout="centered")
+# Streamlit App UI
+st.set_page_config(page_title="Freshness Finder", layout="centered")
 st.title("🍓 Freshness Finder")
-st.write("Upload a fruit image to check if it's **fresh** or **rotten**!")
+st.write("Upload a fruit image and find out if it's fresh or rotten.")
 
-save_image = st.checkbox("💾 Save uploaded image")
+# Option to save uploaded images
+save_image = st.checkbox("💾 Save uploaded/captured image")
 
-uploaded_file = st.file_uploader("📤 Upload a fruit image", type=["jpg", "jpeg", "png"])
+# File upload
+uploaded_file = st.file_uploader("📤 Upload an image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
     st.image(image, caption="🖼️ Uploaded Image", use_column_width=True)
 
+    # Save image if selected
     if save_image:
         os.makedirs("saved_uploads", exist_ok=True)
         image.save(f"saved_uploads/{uploaded_file.name}")
@@ -69,7 +67,7 @@ if uploaded_file is not None:
             st.success(f"**🧠 Prediction:** {label}")
             st.write(f"**📊 Confidence:** {confidence:.2%}")
 
-            # Bar chart
+            # Bar chart of class probabilities
             fig, ax = plt.subplots()
             ax.barh(class_labels, probs, color='skyblue')
             ax.set_xlim([0, 1])
