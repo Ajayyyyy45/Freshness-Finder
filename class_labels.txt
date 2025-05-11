@@ -1,0 +1,6 @@
+Fresh Apple
+Rotten Apple
+Fresh Banana
+Rotten Banana
+Fresh Mango
+Rotten Mango
