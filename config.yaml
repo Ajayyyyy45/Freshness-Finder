@@ -10,6 +10,4 @@ cookie:
   key: some_secret_key
   expiry_days: 7
 
-preauthorized:
-  emails:
-    - jdoe@example.com
+
