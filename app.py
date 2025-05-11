@@ -6,7 +6,7 @@ from tensorflow\.keras.models import load\_model
 
 # Load trained model
 
-model = load\_model("fruit\_classifier\_model.h5")                                                                                               What model is used?
+model = load\_model("fruit\_classifier\_model.h5")                                                                                               
 
 # Automatically generate class labels based on model output shape
 
